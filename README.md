@@ -1,10 +1,17 @@
 # The Last Degen Standing
 
-Rules are simple. 1 Player = 1 Address = 1 transferable Playing NFT Each player pays for the ticket to join the game.
-The ticket funds the prize pool. When game starts, each player has to say gm EVERY 24h. Else they can, and WILL be
-deleted. You can say gm for your frens, if they are afk or something. Deleting a player pays the hunter a bounty. If a
-player wants to give up he can (1) sell his NFT or (2) commit Seppuku and get a partial refund. Last player alive takes
-all the pooled eth.
+Rules are simple. 1 Player = 1 Address = 1 transferable Playing NFT
+
+Each player pays for the ticket to join the game. The ticket funds the prize pool.
+
+When game starts, each player has to say gm EVERY 24h. Else they can, and WILL be deleted.
+
+You can say gm for your frens, if they are afk or something.
+
+Deleting a player pays the hunter a bounty.
+
+If a player wants to give up he can (1) sell his NFT or (2) commit Seppuku and get a partial refund. Last player alive
+takes all the pooled eth.
 
 good luck & have fun
 
