@@ -1,0 +1,6 @@
+LDS_Test:testFail_JoinAfterStart() (gas: 43565)
+LDS_Test:test_Delete() (gas: 184436)
+LDS_Test:test_Gm() (gas: 64306)
+LDS_Test:test_Join() (gas: 83285)
+LDS_Test:test_Seppuku() (gas: 147951)
+LDS_Test:test_Win() (gas: 196126)
