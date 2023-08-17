@@ -1,7 +1,37 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
-import {ERC721} from "solady/tokens/ERC721.sol";
-import {ERC2981} from "solady/tokens/ERC2981.sol";
+// VIRAL PUBLIC LICENSE
+// Copyleft (ɔ) All Rights Reversed
+
+// This WORK is hereby relinquished of all associated ownership, attribution and copy
+// rights, and redistribution or use of any kind, with or without modification, is
+// permitted without restriction subject to the following conditions:
+
+// 1.	Redistributions of this WORK, or ANY work that makes use of ANY of the
+// 	contents of this WORK by ANY kind of copying, dependency, linkage, or ANY
+// 	other possible form of DERIVATION or COMBINATION, must retain the ENTIRETY
+// 	of this license.
+// 2.	No further restrictions of ANY kind may be applied.
+
+/*
+   _      ΞΞΞΞ      _
+  /_;-.__ / _\  _.-;_\
+     `-._`'`_/'`.-'
+         `\   /`
+          |  /
+         /-.(
+         \_._\
+          \ \`;
+           > |/
+          / //
+          |//
+          \(\
+           ``
+     defijesus.eth
+*/
+
+pragma solidity ^0.8.19;
+
+import { ERC721 } from "solady/tokens/ERC721.sol";
+import { ERC2981 } from "solady/tokens/ERC2981.sol";
 
 contract ParticipationTrophy is ERC721, ERC2981 {
     address public immutable $MINTER;

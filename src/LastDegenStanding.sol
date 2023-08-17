@@ -28,10 +28,10 @@
      defijesus.eth
 */
 
+pragma solidity ^0.8.19;
 
-pragma solidity ^0.8.13;
-import {ERC721} from "solady/tokens/ERC721.sol";
-import {ParticipationTrophy} from "./ParticipationTrophy.sol";
+import { ERC721 } from "solady/tokens/ERC721.sol";
+import { ParticipationTrophy } from "./ParticipationTrophy.sol";
 
 /// fees are expressed in bps 1%=100 3%=300 10%=1000 33%=3300
 contract LastDegenStanding is ERC721 {
@@ -72,12 +72,12 @@ contract LastDegenStanding is ERC721 {
     }
 
     constructor(
-        uint256 buyInFee, 
-        uint256 adminFee, 
-        uint256 deleteFee, 
+        uint256 buyInFee,
+        uint256 adminFee,
+        uint256 deleteFee,
         uint256 seppukuFee,
         uint256 inviterFee,
-        address trophyRoyaltiesReceiver, 
+        address trophyRoyaltiesReceiver,
         uint96 trophyRoyalties
     ) {
         $TICKET_PRICE = buyInFee;
@@ -101,7 +101,7 @@ contract LastDegenStanding is ERC721 {
         super._safeMint(msg.sender, $PLAYERS_ALIVE++);
 
         unchecked {
-            (bool s,) = $ADMIN.call{value: (msg.value * $ADMIN_FEE) / 10_000}("");
+            (bool s,) = $ADMIN.call{ value: (msg.value * $ADMIN_FEE) / 10_000 }("");
             require(s);
         }
 
@@ -121,9 +121,9 @@ contract LastDegenStanding is ERC721 {
         super._safeMint(msg.sender, $PLAYERS_ALIVE++);
 
         unchecked {
-            (bool s,) = $ADMIN.call{value: (msg.value * $ADMIN_FEE) / 10_000}("");
+            (bool s,) = $ADMIN.call{ value: (msg.value * $ADMIN_FEE) / 10_000 }("");
             require(s);
-            (s,) = invitedBy.call{value: (msg.value * $INVITER_FEE) / 10_000}("");
+            (s,) = invitedBy.call{ value: (msg.value * $INVITER_FEE) / 10_000 }("");
             require(s);
         }
 
@@ -143,12 +143,10 @@ contract LastDegenStanding is ERC721 {
             revert TOO_MANY();
         }
         uint256 i = 0;
-        for(; i<tokenIds.length;) {
+        for (; i < tokenIds.length;) {
             uint256 tokenId = tokenIds[i];
             address owner = super.ownerOf(tokenId);
-            if (
-                getLastSeen(tokenId) + 24 hours > block.timestamp
-            ) {
+            if (getLastSeen(tokenId) + 24 hours > block.timestamp) {
                 revert CANT_BE_DELETED();
             }
 
@@ -159,7 +157,7 @@ contract LastDegenStanding is ERC721 {
             }
         }
         unchecked {
-            (bool a,) = msg.sender.call{value: (($TICKET_PRICE * tokenIds.length) * $DELETE_FEE) / 10_000}("");
+            (bool a,) = msg.sender.call{ value: (($TICKET_PRICE * tokenIds.length) * $DELETE_FEE) / 10_000 }("");
             require(a);
         }
 
@@ -174,7 +172,7 @@ contract LastDegenStanding is ERC721 {
         deletePlayer(owner, tokenId);
 
         unchecked {
-            (bool a,) = msg.sender.call{value: ($TICKET_PRICE * $SEPPUKU_FEE) / 10_000}("");
+            (bool a,) = msg.sender.call{ value: ($TICKET_PRICE * $SEPPUKU_FEE) / 10_000 }("");
             require(a);
         }
 
@@ -188,7 +186,7 @@ contract LastDegenStanding is ERC721 {
 
         address winner = super.ownerOf(tokenId);
 
-        (bool a,) = winner.call{value: address(this).balance}("");
+        (bool a,) = winner.call{ value: address(this).balance }("");
         require(a);
 
         emit Winner(winner);
@@ -209,9 +207,7 @@ contract LastDegenStanding is ERC721 {
         $DELETE_FEE = deleteFee;
     }
 
-
     /// INTERNAL ///
-    
     function deletePlayer(address owner, uint256 tokenId) internal {
         super._burn(tokenId);
         $PARTICIPATION_TROPHY.mint(owner);

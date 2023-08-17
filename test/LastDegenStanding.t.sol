@@ -7,7 +7,6 @@ import { StdCheats } from "forge-std/StdCheats.sol";
 
 import { LastDegenStanding } from "../src/LastDegenStanding.sol";
 
-
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests
 contract LDS_Test is PRBTest, StdCheats {
@@ -24,12 +23,12 @@ contract LDS_Test is PRBTest, StdCheats {
         vm.prank(bob);
         lds = new LastDegenStanding(1 ether, 500, 500, 500, 100, bob, 500);
         vm.prank(player1);
-        lds.join{value: 1 ether}();
+        lds.join{ value: 1 ether }();
     }
 
     function test_Join() external {
         vm.prank(player2);
-        lds.join{value: 1 ether}();
+        lds.join{ value: 1 ether }();
         assertEq(lds.ownerOf(1), player2);
     }
 
@@ -37,7 +36,7 @@ contract LDS_Test is PRBTest, StdCheats {
         vm.prank(bob);
         lds.startGame();
         vm.prank(player2);
-        lds.join{value: 1 ether}();
+        lds.join{ value: 1 ether }();
     }
 
     function test_Gm() external {
@@ -53,7 +52,7 @@ contract LDS_Test is PRBTest, StdCheats {
 
     function test_Delete() external {
         vm.prank(player2);
-        lds.join{value: 1 ether}();
+        lds.join{ value: 1 ether }();
         vm.prank(bob);
         lds.startGame();
         vm.warp(block.timestamp + 48 hours);
@@ -73,7 +72,7 @@ contract LDS_Test is PRBTest, StdCheats {
 
     function test_Win() external {
         vm.prank(player2);
-        lds.join{value: 1 ether}();
+        lds.join{ value: 1 ether }();
         vm.prank(bob);
         lds.startGame();
         vm.warp(block.timestamp + 48 hours);
@@ -83,6 +82,5 @@ contract LDS_Test is PRBTest, StdCheats {
         lds.deletePlayers(players);
         lds.win(0);
         vm.stopPrank();
-
     }
 }
