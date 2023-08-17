@@ -32,6 +32,19 @@ contract LDS_Test is PRBTest, StdCheats {
         assertEq(lds.ownerOf(1), player2);
     }
 
+    function test_JoinAndTransferToNew() external {
+        vm.startPrank(player2);
+        lds.join{ value: 1 ether }();
+        lds.transferFrom(player2, address(123), 1);
+        assertEq(lds.ownerOf(1), address(123));
+    }
+
+    function testFail_JoinAndTransferToExisting() external {
+        vm.startPrank(player2);
+        lds.join{ value: 1 ether }();
+        lds.transferFrom(player2, player1, 1);
+    }
+
     function testFail_JoinAfterStart() external {
         vm.prank(bob);
         lds.startGame();

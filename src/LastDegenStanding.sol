@@ -26,6 +26,20 @@
           \(\
            ``
      defijesus.eth
+          
+       presents
+
+  The Last Degen Standing
+
+Rules are simple. 1 Player = 1 Address = 1 transferable Playing NFT
+Each player pays for the ticket to join the game. The ticket funds the prize pool.
+When game starts, each player has to say gm EVERY 24h. Else they can, and WILL be deleted.
+You can say gm for your frens, if they are afk or something.
+Deleting a player pays the hunter a bounty.
+If a player wants to give up he can (1) sell his NFT or (2) commit Seppuku and get a partial refund.
+Last player alive takes all the pooled eth.
+
+good luck & have fun
 */
 
 pragma solidity ^0.8.19;
@@ -104,7 +118,6 @@ contract LastDegenStanding is ERC721 {
             (bool s,) = $ADMIN.call{ value: (msg.value * $ADMIN_FEE) / 10_000 }("");
             require(s);
         }
-
         emit NewPlayer(msg.sender, address(0));
     }
 
@@ -239,5 +252,11 @@ contract LastDegenStanding is ERC721 {
     /// NFT might change as number of players is reduced
     function tokenURI(uint256 id) public view override returns (string memory) {
         return "TODO";
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 id) internal override {
+        if (to != address(0) && super.balanceOf(to) > 0) {
+            revert ALREADY_PLAYING();
+        }
     }
 }
