@@ -33,7 +33,7 @@ pragma solidity ^0.8.19;
 import { ERC721 } from "solady/tokens/ERC721.sol";
 import { ERC2981 } from "solady/tokens/ERC2981.sol";
 
-contract ParticipationTrophy is ERC721, ERC2981 {
+contract TheParticipationTrophy is ERC721, ERC2981 {
     address public immutable $MINTER;
     uint256 public $CURRENT_SUPPLY;
 
@@ -60,7 +60,7 @@ contract ParticipationTrophy is ERC721, ERC2981 {
 
     /// @dev Returns the token collection symbol.
     function symbol() public pure override returns (string memory) {
-        return "LSTDGNTROPHY1";
+        return "TLDSPT1";
     }
 
     /// @dev Returns the Uniform Resource Identifier (URI) for token `id`.

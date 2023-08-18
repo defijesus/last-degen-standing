@@ -31,13 +31,18 @@
 
   The Last Degen Standing
 
-Rules are simple. 1 Player = 1 Address = 1 transferable Playing NFT
-Each player pays for the ticket to join the game. The ticket funds the prize pool.
-When game starts, each player has to say gm EVERY 24h. Else they can, and WILL be deleted.
+Rules are simple. 1 Degen = 1 Address = 1 transferable Playing NFT
+
+Each Degen pays for the ticket to join the game. The ticket funds the prize pool.
+
+When game starts, each degen has to say gm EVERY 24h. Else they can, and WILL be deleted.
+
 You can say gm for your frens, if they are afk or something.
-Deleting a player pays the hunter a bounty.
-If a player wants to give up he can (1) sell his NFT or (2) commit Seppuku and get a partial refund.
-Last player alive takes all the pooled eth.
+
+Deleting a degen pays the hunter a bounty.
+
+If a degen wants to give up he can (1) sell his NFT or (2) commit Seppuku and get a partial refund. Last degen alive
+takes all the pooled eth.
 
 good luck & have fun
 */
@@ -45,21 +50,28 @@ good luck & have fun
 pragma solidity ^0.8.19;
 
 import { ERC721 } from "solady/tokens/ERC721.sol";
-import { ParticipationTrophy } from "./ParticipationTrophy.sol";
+import { TheParticipationTrophy } from "./TheParticipationTrophy.sol";
 
 /// fees are expressed in bps 1%=100 3%=300 10%=1000 33%=3300
-contract LastDegenStanding is ERC721 {
-    uint256 public immutable $TICKET_PRICE;
-    uint256 public immutable $ADMIN_FEE;
-    uint256 public immutable $SEPPUKU_FEE;
-    uint256 public immutable $INVITER_FEE;
+contract TheLastDegenStanding is ERC721 {
+    uint256 public constant $TICKET_PRICE = 0.03 ether;
+    uint256 public constant $ADMIN_FEE = 500;
+    uint256 public constant $SEPPUKU_FEE = 1000;
+    uint256 public constant $INVITER_FEE = 500;
+    uint256 public constant $DEGEN_COOLDOWN = 24 hours;
+    uint96 public constant $TROPHY_ROYALTIES_FEE = 1000;
+    address public constant $TROPHY_ROYALTIES_RECEIVER = address(123); // TODO
+    
+    TheParticipationTrophy public immutable $THE_PARTICIPATION_TROPHY;
 
-    address public immutable $ADMIN;
-    ParticipationTrophy public immutable $PARTICIPATION_TROPHY;
-
+    /// not constant due to possible changing economic incentives
     uint256 public $DELETE_FEE;
-    uint256 public $PLAYERS_ALIVE;
+    uint256 public $DEGENS_ALIVE;
+    /// timestamp of the last degen that joined the game
+    uint256 public $LAST_DEGEN_IN;
+    /// timestamp of when the game started
     uint256 public $GAME_STARTED;
+    address public $ADMIN = 0xDe30040413b26d7Aa2B6Fc4761D80eb35Dcf97aD;
 
     mapping(uint256 tokenId => uint256 timestamp) public $LAST_SEEN;
 
@@ -70,13 +82,15 @@ contract LastDegenStanding is ERC721 {
     error IS_NOT_OVER();
     error GAME_NOT_STARTED();
     error ONLY_OWNER();
+    error CANT_START_GAME();
 
-    event NewPlayer(address indexed player, address invitedBy);
+    event NewDegen(address indexed degen);
+    event NewFriendlyDegen(address indexed degen, address invitedBy);
     event GameStarted(uint256 timestamp);
-    event GoodMorning(address indexed player, uint256 timestamp);
-    event PlayersDeleted(address indexed hunter, uint256[] players);
-    event Seppuku(address indexed player);
-    event Winner(address indexed player);
+    event GM(address indexed degen, uint256 timestamp);
+    event DegensDeleted(address indexed hunter, uint256[] degens);
+    event Seppuku(address indexed degen);
+    event Winner(address indexed degen);
 
     modifier gameHasStarted() {
         if ($GAME_STARTED == 0) {
@@ -85,53 +99,44 @@ contract LastDegenStanding is ERC721 {
         _;
     }
 
-    constructor(
-        uint256 buyInFee,
-        uint256 adminFee,
-        uint256 deleteFee,
-        uint256 seppukuFee,
-        uint256 inviterFee,
-        address trophyRoyaltiesReceiver,
-        uint96 trophyRoyalties
-    ) {
-        $TICKET_PRICE = buyInFee;
-        $ADMIN_FEE = adminFee;
-        $DELETE_FEE = deleteFee;
-        $SEPPUKU_FEE = seppukuFee;
-        $INVITER_FEE = inviterFee;
-        $ADMIN = msg.sender;
-        $PARTICIPATION_TROPHY = new ParticipationTrophy(trophyRoyaltiesReceiver, trophyRoyalties);
+    constructor() {
+        $THE_PARTICIPATION_TROPHY = new TheParticipationTrophy($TROPHY_ROYALTIES_RECEIVER, $TROPHY_ROYALTIES_FEE);
+        $LAST_DEGEN_IN = block.timestamp;
     }
 
     function join() public payable {
         require($GAME_STARTED == 0);
-        if (super.balanceOf(msg.sender) > 0) {
+        if (super.balanceOf(msg.sender) != 0) {
             revert ALREADY_PLAYING();
         }
         if (msg.value != $TICKET_PRICE) {
             revert INCORRECT_PAYMENT();
         }
 
-        super._safeMint(msg.sender, $PLAYERS_ALIVE++);
+        $LAST_DEGEN_IN = block.timestamp;
+
+        super._safeMint(msg.sender, $DEGENS_ALIVE++);
 
         unchecked {
             (bool s,) = $ADMIN.call{ value: (msg.value * $ADMIN_FEE) / 10_000 }("");
             require(s);
         }
-        emit NewPlayer(msg.sender, address(0));
+        emit NewDegen(msg.sender);
     }
 
     function joinWithInvite(address invitedBy) public payable {
         require($GAME_STARTED == 0);
-        require(invitedBy != msg.sender && super.balanceOf(invitedBy) > 0);
-        if (super.balanceOf(msg.sender) > 0) {
+        require(invitedBy != msg.sender && super.balanceOf(invitedBy) != 0);
+        if (super.balanceOf(msg.sender) != 0) {
             revert ALREADY_PLAYING();
         }
         if (msg.value != $TICKET_PRICE) {
             revert INCORRECT_PAYMENT();
         }
 
-        super._safeMint(msg.sender, $PLAYERS_ALIVE++);
+        $LAST_DEGEN_IN = block.timestamp;
+
+        super._safeMint(msg.sender, $DEGENS_ALIVE++);
 
         unchecked {
             (bool s,) = $ADMIN.call{ value: (msg.value * $ADMIN_FEE) / 10_000 }("");
@@ -140,18 +145,29 @@ contract LastDegenStanding is ERC721 {
             require(s);
         }
 
-        emit NewPlayer(msg.sender, invitedBy);
+        emit NewFriendlyDegen(msg.sender, invitedBy);
+    }
+
+    function startGame() public {
+        if (
+            $GAME_STARTED != 0 ||
+            ($LAST_DEGEN_IN + $DEGEN_COOLDOWN) > block.timestamp
+        ) {
+            revert CANT_START_GAME();
+        }
+        $GAME_STARTED = block.timestamp;
+        emit GameStarted(block.timestamp);
     }
 
     function gm(uint256 tokenId) public gameHasStarted {
         $LAST_SEEN[tokenId] = block.timestamp;
-        emit GoodMorning(super.ownerOf(tokenId), block.timestamp);
+        emit GM(super.ownerOf(tokenId), block.timestamp);
     }
 
-    /// to all searchooooors, pls delete all the players
-    /// yes, there might be a chance where all players get deleted and no one gets the prize
+    /// to all searchooooors, pls delete all the degens
+    /// yes, there might be a chance where all degens get deleted and no one gets the prize
     /// it do be designed as intended
-    function deletePlayers(uint256[] calldata tokenIds) public gameHasStarted {
+    function deleteDegens(uint256[] calldata tokenIds) public gameHasStarted {
         if (tokenIds.length > 20) {
             revert TOO_MANY();
         }
@@ -163,7 +179,7 @@ contract LastDegenStanding is ERC721 {
                 revert CANT_BE_DELETED();
             }
 
-            deletePlayer(owner, tokenId);
+            deleteDegen(owner, tokenId);
 
             unchecked {
                 i++;
@@ -174,7 +190,7 @@ contract LastDegenStanding is ERC721 {
             require(a);
         }
 
-        emit PlayersDeleted(msg.sender, tokenIds);
+        emit DegensDeleted(msg.sender, tokenIds);
     }
 
     function seppuku(uint256 tokenId) public gameHasStarted {
@@ -182,7 +198,7 @@ contract LastDegenStanding is ERC721 {
         if (owner != msg.sender) {
             revert ONLY_OWNER();
         }
-        deletePlayer(owner, tokenId);
+        deleteDegen(owner, tokenId);
 
         unchecked {
             (bool a,) = msg.sender.call{ value: ($TICKET_PRICE * $SEPPUKU_FEE) / 10_000 }("");
@@ -193,7 +209,7 @@ contract LastDegenStanding is ERC721 {
     }
 
     function win(uint256 tokenId) public gameHasStarted {
-        if ($PLAYERS_ALIVE > 1) {
+        if ($DEGENS_ALIVE != 1) {
             revert IS_NOT_OVER();
         }
 
@@ -205,26 +221,39 @@ contract LastDegenStanding is ERC721 {
         emit Winner(winner);
     }
 
-    /// ONLY ADMIN ///
+    /// if u (as a searcher) manage to delete all the players, feel free to take the pot :)
+    /// I'll double dip on the fee tho, hope u don't mind
+    function everyoneLost() public gameHasStarted {
+        if ($DEGENS_ALIVE != 0) {
+            revert IS_NOT_OVER();
+        }
+        address winner = msg.sender;
 
-    function startGame() public {
-        require($GAME_STARTED == 0 && msg.sender == $ADMIN);
-        $GAME_STARTED = block.timestamp;
-        emit GameStarted(block.timestamp);
+        unchecked {
+            (bool s,) = $ADMIN.call{ value: (address(this).balance * $ADMIN_FEE) / 10_000 }("");
+            require(s);
+        }
+
+        (bool a,) = winner.call{ value: address(this).balance }("");
+        require(a);
+
+        emit Winner(winner);
     }
 
-    /// depending on gas costs, the hunter might not be economically incentivised to delete players
-    ///     so I might have to adjust hunter fee per deletion to keep the game going
+    /// ONLY ADMIN ///
+
+    /// depending on gas costs, the hunter might not be economically incentivised to delete degens
+    ///     so the admin might have to adjust hunter fee per deletion to keep the game going
+    /// considering turning this admin into a partydao controlled by nft holders
     function setFees(uint256 deleteFee) public {
         require(msg.sender == $ADMIN);
         $DELETE_FEE = deleteFee;
     }
 
-    /// INTERNAL ///
-    function deletePlayer(address owner, uint256 tokenId) internal {
-        super._burn(tokenId);
-        $PARTICIPATION_TROPHY.mint(owner);
-        $PLAYERS_ALIVE--;
+    /// Justin Case
+    function gibAdmin(address newAdmin) public {
+        require(msg.sender == $ADMIN);
+        $ADMIN = newAdmin;
     }
 
     /// ERC721 & VIEW ///
@@ -244,17 +273,24 @@ contract LastDegenStanding is ERC721 {
 
     /// @dev Returns the token collection symbol.
     function symbol() public pure override returns (string memory) {
-        return "LSTDGN";
+        return "TLDS";
     }
 
     /// @dev Returns the Uniform Resource Identifier (URI) for token `id`.
     /// TODO add onchain component with offchain img url, onchain metadata includes last seen timestamp?
-    /// NFT might change as number of players is reduced
+    /// NFT might change as number of degens is reduced
     function tokenURI(uint256 id) public view override returns (string memory) {
         return "TODO";
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 id) internal override {
+    /// INTERNAL ///
+    function deleteDegen(address owner, uint256 tokenId) internal {
+        super._burn(tokenId);
+        $THE_PARTICIPATION_TROPHY.mint(owner);
+        $DEGENS_ALIVE--;
+    }
+
+    function _beforeTokenTransfer(address, address to, uint256) internal view override {
         if (to != address(0) && super.balanceOf(to) > 0) {
             revert ALREADY_PLAYING();
         }
