@@ -31,11 +31,26 @@
 
   The Last Degen Standing
 
+|-----------------------------------------------------------------------------|
+         TD;CR
+  (Too Degen; Can't Read)
+
+STEP 1 - JOIN THE GAME
+STEP 2 - START THE GAME (or wait for someone to start it for u)
+STEP 3 - SAY GM EVERY 24 HOURS OR LESS
+STEP 4 - DON'T GET DELETED
+STEP 5 - WIN
+|-----------------------------------------------------------------------------|
+
 Rules are simple. 1 Degen = 1 Address = 1 transferable Playing NFT
 
 Each Degen pays for the ticket to join the game. The ticket funds the prize pool.
 
-When game starts, each degen has to say gm EVERY 24h. Else they can, and WILL be deleted.
+If a degen invites another degen, the first degen wins a small fee.
+
+After no more degens join the game for a while, anyone can start the game.
+
+When the game starts, EACH DEGEN HAS TO CALL THE GM FUNCTION ONCE EVERY 24h. Else they can, and WILL, be deleted.
 
 You can say gm for your frens, if they are afk or something.
 
@@ -54,23 +69,22 @@ import { TheParticipationTrophy } from "./TheParticipationTrophy.sol";
 
 /// fees are expressed in bps 1%=100 3%=300 10%=1000 33%=3300
 contract TheLastDegenStanding is ERC721 {
-    uint256 public constant $TICKET_PRICE = 0.03 ether;
-    uint256 public constant $ADMIN_FEE = 500;
+    uint256 public constant $TICKET_PRICE = 0.0069 ether;
+    uint256 public constant $ADMIN_FEE = 1000;
     uint256 public constant $SEPPUKU_FEE = 1000;
     uint256 public constant $INVITER_FEE = 500;
-    uint256 public constant $DEGEN_COOLDOWN = 24 hours;
-    uint96 public constant $TROPHY_ROYALTIES_FEE = 1000;
-    address public constant $TROPHY_ROYALTIES_RECEIVER = address(123); // TODO
+    uint256 public constant $DEGEN_COOLDOWN = 32 hours;
     
     TheParticipationTrophy public immutable $THE_PARTICIPATION_TROPHY;
 
     /// not constant due to possible changing economic incentives
     uint256 public $DELETE_FEE;
-    uint256 public $DEGENS_ALIVE;
-    /// timestamp of the last degen that joined the game
+
+    /// timestamps
     uint256 public $LAST_DEGEN_IN;
-    /// timestamp of when the game started
     uint256 public $GAME_STARTED;
+
+    uint256 public $DEGENS_ALIVE;
     address public $ADMIN = 0xDe30040413b26d7Aa2B6Fc4761D80eb35Dcf97aD;
 
     mapping(uint256 tokenId => uint256 timestamp) public $LAST_SEEN;
@@ -100,9 +114,11 @@ contract TheLastDegenStanding is ERC721 {
     }
 
     constructor() {
-        $THE_PARTICIPATION_TROPHY = new TheParticipationTrophy($TROPHY_ROYALTIES_RECEIVER, $TROPHY_ROYALTIES_FEE);
+        $THE_PARTICIPATION_TROPHY = new TheParticipationTrophy(address(123), 1000); // TODO
         $LAST_DEGEN_IN = block.timestamp;
     }
+
+    /// STEP 1 - JOIN THE GAME
 
     function join() public payable {
         require($GAME_STARTED == 0);
@@ -148,6 +164,8 @@ contract TheLastDegenStanding is ERC721 {
         emit NewFriendlyDegen(msg.sender, invitedBy);
     }
 
+    /// STEP 2 - START THE GAME
+
     function startGame() public {
         if (
             $GAME_STARTED != 0 ||
@@ -159,10 +177,14 @@ contract TheLastDegenStanding is ERC721 {
         emit GameStarted(block.timestamp);
     }
 
+    /// STEP 3 - SAY GM EVERY DAY
+
     function gm(uint256 tokenId) public gameHasStarted {
         $LAST_SEEN[tokenId] = block.timestamp;
         emit GM(super.ownerOf(tokenId), block.timestamp);
     }
+
+    /// STEP 4 - DON'T GET DELETED
 
     /// to all searchooooors, pls delete all the degens
     /// yes, there might be a chance where all degens get deleted and no one gets the prize
@@ -208,6 +230,8 @@ contract TheLastDegenStanding is ERC721 {
         emit Seppuku(msg.sender);
     }
 
+    /// STEP 5 - WIN
+
     function win(uint256 tokenId) public gameHasStarted {
         if ($DEGENS_ALIVE != 1) {
             revert IS_NOT_OVER();
@@ -220,6 +244,8 @@ contract TheLastDegenStanding is ERC721 {
 
         emit Winner(winner);
     }
+
+    /// STEP 6? - EVERYONE LOSES AND THE MEVORS WIN, ONCE AGAIN
 
     /// if u (as a searcher) manage to delete all the players, feel free to take the pot :)
     /// I'll double dip on the fee tho, hope u don't mind
@@ -278,12 +304,13 @@ contract TheLastDegenStanding is ERC721 {
 
     /// @dev Returns the Uniform Resource Identifier (URI) for token `id`.
     /// TODO add onchain component with offchain img url, onchain metadata includes last seen timestamp?
-    /// NFT might change as number of degens is reduced
+    /// image URI might change as number of degens is reduced
     function tokenURI(uint256 id) public view override returns (string memory) {
         return "TODO";
     }
 
     /// INTERNAL ///
+
     function deleteDegen(address owner, uint256 tokenId) internal {
         super._burn(tokenId);
         $THE_PARTICIPATION_TROPHY.mint(owner);
