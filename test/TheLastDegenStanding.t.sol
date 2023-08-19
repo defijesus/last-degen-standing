@@ -6,7 +6,6 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheats } from "forge-std/StdCheats.sol";
 
 import { TheLastDegenStanding } from "../src/TheLastDegenStanding.sol";
-import { TLDSMetadata } from "../src/TLDSMetadata.sol";
 import { TheParticipationTrophy } from "../src/TheParticipationTrophy.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
@@ -26,14 +25,8 @@ contract LDS_Test is PRBTest, StdCheats {
         vm.deal(player3, 1 ether);
         vm.deal(player4, 1 ether);
         lds = new TheLastDegenStanding();
-        TLDSMetadata metadata = new TLDSMetadata();
-        string memory uri = "LMAAAAAO";
         ticketPrice = lds.$TICKET_PRICE();
-        vm.startPrank(admin);
-        metadata.setImageURI(uri);
-        metadata.setTrophyURI(uri);
-        lds.setTldsMetadata(address(metadata));
-        vm.stopPrank();
+        vm.prank(admin);
     }
 
     function test_Join() external {

@@ -67,7 +67,7 @@ pragma solidity ^0.8.19;
 import { ERC721 } from "solady/tokens/ERC721.sol";
 import { TheParticipationTrophy } from "./TheParticipationTrophy.sol";
 import { Helpers } from "./Helpers.sol";
-import { ITLDS_Metadata } from "./ITLDSMetadata.sol";
+import { TLDSMetadata } from "./TLDSMetadata.sol";
 
 /// fees are expressed in bps 1%=100 3%=300 10%=1000 33%=3300
 contract TheLastDegenStanding is ERC721 {
@@ -89,7 +89,7 @@ contract TheLastDegenStanding is ERC721 {
     uint256 public $DEGENS_ALIVE;
     address public $ADMIN = 0xDe30040413b26d7Aa2B6Fc4761D80eb35Dcf97aD;
     address public $WINNER;
-    ITLDS_Metadata public $TLDS_METADATA;
+    TLDSMetadata public $TLDS_METADATA;
 
     mapping(uint256 tokenId => uint256 timestamp) public $LAST_SEEN;
 
@@ -132,6 +132,7 @@ contract TheLastDegenStanding is ERC721 {
 
     constructor() {
         $THE_PARTICIPATION_TROPHY = new TheParticipationTrophy(0xB7ec3b5716Dbe7b8fa3436B9D552E516C500c3FB, 1000);
+        $TLDS_METADATA = new TLDSMetadata();
         $LAST_DEGEN_IN = block.timestamp;
     }
 
@@ -291,11 +292,12 @@ contract TheLastDegenStanding is ERC721 {
     ///     so the admin might have to adjust hunter fee per deletion to keep the game going
     /// considering turning this admin into a smoldao controlled by nft holders
     function setFees(uint256 deleteFee) public onlyAdmin {
+        require(deleteFee > 100 && deleteFee < 1500);
         $DELETE_FEE = deleteFee;
     }
 
     function setTldsMetadata(address tldsMetadata) public onlyAdmin {
-        $TLDS_METADATA = ITLDS_Metadata(tldsMetadata);
+        $TLDS_METADATA = TLDSMetadata(tldsMetadata);
     }
 
     /// Justin Case
