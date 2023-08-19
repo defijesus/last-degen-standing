@@ -33,8 +33,8 @@ pragma solidity ^0.8.19;
 import { ITLDS_Metadata } from "./ITLDSMetadata.sol";
 
 contract TLDSMetadata is ITLDS_Metadata {
-    string public $IMAGE_URI;
-    string public $TROPHY_URI;
+    string public $IMAGE_URI = "ipfs://bafybeia5whm6dq5vanhblnnacyx5bqdqdqgsd2ijgtbdnc6k3lmzpvjb3m";
+    string public $TROPHY_URI = "ipfs://bafybeia5whm6dq5vanhblnnacyx5bqdqdqgsd2ijgtbdnc6k3lmzpvjb3m";
 
     function setImageURI(string calldata imageURI) public {
         require(msg.sender == 0xDe30040413b26d7Aa2B6Fc4761D80eb35Dcf97aD);
