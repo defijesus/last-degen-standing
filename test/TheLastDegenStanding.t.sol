@@ -105,7 +105,7 @@ contract LDS_Test is PRBTest, StdCheats {
         lds.join{ value: ticketPrice }();
         vm.prank(player2);
         lds.join{ value: ticketPrice }();
-        vm.warp(block.timestamp + 25 hours);
+        vm.warp(block.timestamp + lds.$DEGEN_COOLDOWN() + 1 hours);
         lds.startGame();
     }
 }

@@ -6,8 +6,10 @@ import { TheLastDegenStanding } from "../src/TheLastDegenStanding.sol";
 import { BaseScript } from "./Base.s.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
+/// command: make deploy-ledger contract=script/Deploy.s.sol/:Deploy chain=baldchain
 contract Deploy is BaseScript {
-    function run() public broadcast returns (TheLastDegenStanding lds) {
-        lds = new TheLastDegenStanding();
+    function run() public broadcast {
+        TheLastDegenStanding lds = new TheLastDegenStanding();
+        lds.join{ value: lds.$TICKET_PRICE() }();
     }
 }

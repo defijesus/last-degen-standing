@@ -32,23 +32,34 @@ pragma solidity ^0.8.19;
 
 import { ERC721 } from "solady/tokens/ERC721.sol";
 import { ERC2981 } from "solady/tokens/ERC2981.sol";
+import { Helpers } from "./Helpers.sol";
+
+interface ITLDS {
+    function $GAME_START() external view returns (uint256);
+}
 
 contract TheParticipationTrophy is ERC721, ERC2981 {
     address public immutable $MINTER;
-    uint256 public $CURRENT_SUPPLY;
+
+    mapping(uint256 tokenId => uint256 deletedTimestamp) public $WEN_PLAYER_DELETED;
 
     error NOT_MINTER();
+
+    modifier onlyMinter {
+        if (msg.sender != $MINTER) {
+            revert NOT_MINTER();
+        }
+        _;
+    }
 
     constructor(address admin, uint96 royalties) {
         $MINTER = msg.sender;
         super._setDefaultRoyalty(admin, royalties);
     }
 
-    function mint(address to) public {
-        if (msg.sender != $MINTER) {
-            revert NOT_MINTER();
-        }
-        super._safeMint(to, $CURRENT_SUPPLY++);
+    function mint(address to, uint256 tokenId) public onlyMinter {
+        $WEN_PLAYER_DELETED[tokenId] = block.timestamp;
+        super._safeMint(to, tokenId);
     }
 
     /// ERC721 stuffs
@@ -63,11 +74,31 @@ contract TheParticipationTrophy is ERC721, ERC2981 {
         return "TLDSPT1";
     }
 
-    /// @dev Returns the Uniform Resource Identifier (URI) for token `id`.
-    /// TODO add onchain component with offchain img url, onchain metadata includes last seen timestamp?
-    /// NFT might change as number of players is reduced
-    function tokenURI(uint256 id) public view override returns (string memory) {
-        return "TODO";
+    function tokenURI(uint256 tokenId) public view override returns (string memory output) {
+        ITLDS tlds = ITLDS($MINTER);
+        uint256 gameStart = tlds.$GAME_START();
+        uint256 degenDeleted = $WEN_PLAYER_DELETED[tokenId];
+        uint256 daysPlayed = (degenDeleted - gameStart) / 86400;
+        string memory json = Helpers.encode(
+            bytes(
+                string(
+                    abi.encodePacked(
+                        '{"name": "Deleted Degen #',
+                        Helpers.toString(tokenId),
+                        '","attributes": [{"display_type": "date", "trait_type": "Joined timestamp", "value":',
+                        Helpers.toString(gameStart),
+                        '},{"display_type": "date", "trait_type": "Deletion timestamp", "value":',
+                        Helpers.toString(degenDeleted),
+                        '}],"description": "This degen played for ',
+                        Helpers.toString(daysPlayed),
+                        'days.", "image": "TODO"}'
+                    )
+                )
+            )
+        );
+        output = string(
+            abi.encodePacked("data:application/json;base64,", json)
+        );
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981) returns (bool result) {
