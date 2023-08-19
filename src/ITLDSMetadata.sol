@@ -32,4 +32,5 @@ pragma solidity ^0.8.19;
 
 interface ITLDS_Metadata {
     function getImageURI(uint256) external view returns (string memory);
+    function getTrophyURI(uint256) external view returns (string memory);
 }

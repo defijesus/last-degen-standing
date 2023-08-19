@@ -6,22 +6,34 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheats } from "forge-std/StdCheats.sol";
 
 import { TheLastDegenStanding } from "../src/TheLastDegenStanding.sol";
+import { TLDSMetadata } from "../src/TLDSMetadata.sol";
+import { TheParticipationTrophy } from "../src/TheParticipationTrophy.sol";
 
 /// @dev If this is your first time with Forge, read this tutorial in the Foundry Book:
 /// https://book.getfoundry.sh/forge/writing-tests
 contract LDS_Test is PRBTest, StdCheats {
     TheLastDegenStanding internal lds;
-    address internal admin = address(0xB0B);
-    address internal player1 = address(0xB00B);
-    address internal player2 = address(0xB00B13);
-    address internal player3 = address(0xB00B135);
+    address internal admin = 0xDe30040413b26d7Aa2B6Fc4761D80eb35Dcf97aD;
+    address internal player1 = address(0xB0B);
+    address internal player2 = address(0xB00B);
+    address internal player3 = address(0xB00B13);
+    address internal player4 = address(0xB00B135);
     uint256 internal ticketPrice;
 
     function setUp() public virtual {
         vm.deal(player1, 1 ether);
         vm.deal(player2, 1 ether);
+        vm.deal(player3, 1 ether);
+        vm.deal(player4, 1 ether);
         lds = new TheLastDegenStanding();
+        TLDSMetadata metadata = new TLDSMetadata();
+        string memory uri = "LMAAAAAO";
         ticketPrice = lds.$TICKET_PRICE();
+        vm.startPrank(admin);
+        metadata.setImageURI(uri);
+        metadata.setTrophyURI(uri);
+        lds.setTldsMetadata(address(metadata));
+        vm.stopPrank();
     }
 
     function test_Join() external {
@@ -93,17 +105,39 @@ contract LDS_Test is PRBTest, StdCheats {
         startGameWithPlayers();
         vm.warp(block.timestamp + 48 hours);
         vm.startPrank(player1);
-        uint256[] memory players = new uint256[](1);
+        uint256[] memory players = new uint256[](2);
         players[0] = 1;
+        players[1] = 2;
         lds.deleteDegens(players);
         lds.win(0);
         vm.stopPrank();
+    }
+
+    function test_PrintTokenUris() external {
+        startGameWithPlayers();
+        string memory tokenUri = lds.tokenURI(0);
+        emit LogNamedString("before ending game", tokenUri);
+        vm.warp(block.timestamp + 48 hours);
+        uint256[] memory players = new uint256[](2);
+        players[0] = 1;
+        players[1] = 2;
+        vm.startPrank(player1);
+        lds.deleteDegens(players);
+        lds.win(0);
+        tokenUri = lds.tokenURI(0);
+        emit LogNamedString("after ending game", tokenUri);
+        tokenUri = lds.$THE_PARTICIPATION_TROPHY().tokenURI(1);
+        emit LogNamedString("first part trophy", tokenUri);
+        tokenUri = lds.$THE_PARTICIPATION_TROPHY().tokenURI(2);
+        emit LogNamedString("second part trophy", tokenUri);
     }
 
     function startGameWithPlayers() internal {
         vm.prank(player1);
         lds.join{ value: ticketPrice }();
         vm.prank(player2);
+        lds.join{ value: ticketPrice }();
+        vm.prank(player3);
         lds.join{ value: ticketPrice }();
         vm.warp(block.timestamp + lds.$DEGEN_COOLDOWN() + 1 hours);
         lds.startGame();

@@ -34,6 +34,7 @@ import { ITLDS_Metadata } from "./ITLDSMetadata.sol";
 
 contract TLDSMetadata is ITLDS_Metadata {
     string public $IMAGE_URI;
+    string public $TROPHY_URI;
 
     function setImageURI(string calldata imageURI) public {
         require(msg.sender == 0xDe30040413b26d7Aa2B6Fc4761D80eb35Dcf97aD);
@@ -41,5 +42,12 @@ contract TLDSMetadata is ITLDS_Metadata {
     }
     function getImageURI(uint256) public view returns (string memory) {
         return $IMAGE_URI;
+    }
+    function setTrophyURI(string calldata trophyURI) public {
+        require(msg.sender == 0xDe30040413b26d7Aa2B6Fc4761D80eb35Dcf97aD);
+        $TROPHY_URI = trophyURI;
+    }
+    function getTrophyURI(uint256) public view returns (string memory) {
+        return $TROPHY_URI;
     }
 }

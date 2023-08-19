@@ -331,7 +331,7 @@ contract TheLastDegenStanding is ERC721 {
                     abi.encodePacked(
                         '{"name": "',
                         getName(tokenId),
-                        '","description": "',
+                        '", "description": "',
                         getDescription(),
                         '", "image": "',
                         $TLDS_METADATA.getImageURI(tokenId),

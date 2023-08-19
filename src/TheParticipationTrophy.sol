@@ -33,15 +33,23 @@ pragma solidity ^0.8.19;
 import { ERC721 } from "solady/tokens/ERC721.sol";
 import { ERC2981 } from "solady/tokens/ERC2981.sol";
 import { Helpers } from "./Helpers.sol";
+import { ITLDS_Metadata } from "./ITLDSMetadata.sol";
 
 interface ITLDS {
-    function $GAME_START() external view returns (uint256);
+    function $GAME_STARTED() external view returns (uint256);
+    function $DEGENS_ALIVE() external view returns (uint256);
+    function $TLDS_METADATA() external view returns (ITLDS_Metadata);
 }
 
 contract TheParticipationTrophy is ERC721, ERC2981 {
     address public immutable $MINTER;
+    uint256 public $DEGEN_COUNT;
+
+    bool internal $FIRST_MINT = true;
+    uint256 internal $DEGENS_SEEN;
 
     mapping(uint256 tokenId => uint256 deletedTimestamp) public $WEN_PLAYER_DELETED;
+    mapping(uint256 tokenId => uint256 standing) public $DEGEN_STANDINGS;
 
     error NOT_MINTER();
 
@@ -58,7 +66,13 @@ contract TheParticipationTrophy is ERC721, ERC2981 {
     }
 
     function mint(address to, uint256 tokenId) public onlyMinter {
+        if ($FIRST_MINT) {
+            $DEGEN_COUNT = ITLDS($MINTER).$DEGENS_ALIVE();
+            $FIRST_MINT = false;
+        }
+        $DEGEN_STANDINGS[tokenId] = $DEGEN_COUNT - $DEGENS_SEEN;
         $WEN_PLAYER_DELETED[tokenId] = block.timestamp;
+        $DEGENS_SEEN++;
         super._safeMint(to, tokenId);
     }
 
@@ -75,23 +89,28 @@ contract TheParticipationTrophy is ERC721, ERC2981 {
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory output) {
-        ITLDS tlds = ITLDS($MINTER);
-        uint256 gameStart = tlds.$GAME_START();
+        uint256 gameStart = ITLDS($MINTER).$GAME_STARTED();
         uint256 degenDeleted = $WEN_PLAYER_DELETED[tokenId];
         uint256 daysPlayed = (degenDeleted - gameStart) / 86400;
+        uint256 place = $DEGEN_STANDINGS[tokenId];
+        string memory imageURI = ITLDS_Metadata(ITLDS($MINTER).$TLDS_METADATA()).getTrophyURI(tokenId);
         string memory json = Helpers.encode(
             bytes(
                 string(
                     abi.encodePacked(
                         '{"name": "Deleted Degen #',
                         Helpers.toString(tokenId),
-                        '","attributes": [{"display_type": "date", "trait_type": "Joined timestamp", "value":',
+                        '", "attributes": [{"display_type": "date", "trait_type": "Joined", "value": ',
                         Helpers.toString(gameStart),
-                        '},{"display_type": "date", "trait_type": "Deletion timestamp", "value":',
+                        '}, {"display_type": "date", "trait_type": "Deleted", "value": ',
                         Helpers.toString(degenDeleted),
-                        '}],"description": "This degen played for ',
+                        '}, {"display_type": "number", "trait_type": "Place", "value": ',
+                        Helpers.toString(place),
+                        '}], "description": "This degen played for ',
                         Helpers.toString(daysPlayed),
-                        'days.", "image": "TODO"}'
+                        ' days.", "image": "',
+                        imageURI,
+                        '"}'    
                     )
                 )
             )
